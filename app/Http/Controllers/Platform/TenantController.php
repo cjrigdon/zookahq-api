@@ -44,7 +44,7 @@ class TenantController extends Controller
         ]);
 
         $tenant->domains()->create([
-            'domain' => $slug.'.localhost',
+            'domain' => $slug.'.'.config('app.base_domain'),
         ]);
 
         $moduleCodes = $data['modules'] ?? ['booking'];

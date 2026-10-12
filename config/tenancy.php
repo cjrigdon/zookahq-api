@@ -15,12 +15,15 @@ return [
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    'central_domains' => [
-        '127.0.0.1',
-        'localhost',
-        'admin.localhost',
-        'api.localhost',
-    ],
+    'central_domains' => array_values(array_filter(array_unique(array_merge(
+        [
+            '127.0.0.1',
+            'localhost',
+            'admin.localhost',
+            'api.localhost',
+        ],
+        array_map('trim', explode(',', (string) env('TENANCY_CENTRAL_DOMAINS', ''))),
+    )))),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
@@ -195,7 +198,7 @@ return [
      * Parameters used by the tenants:seed command.
      */
     'seeder_parameters' => [
-        '--class' => 'Database\\Seeders\\TenantDatabaseSeeder', // root seeder class
-        // '--force' => true, // This needs to be true to seed tenant databases in production
+        '--class' => 'Database\\Seeders\\TenantDatabaseSeeder',
+        '--force' => true,
     ],
 ];

@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
             ]);
 
-            $tenant->domains()->create(['domain' => 'demo.localhost']);
+            $tenant->domains()->create(['domain' => 'demo.'.config('app.base_domain')]);
 
             $moduleCodes = ['booking', 'events', 'operations', 'accounting', 'reporting'];
             foreach ($moduleCodes as $code) {
