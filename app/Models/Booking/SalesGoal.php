@@ -20,8 +20,8 @@ class SalesGoal extends Model
     {
         return [
             'target_amount' => 'decimal:2',
-            'period_start' => 'date',
-            'period_end' => 'date',
+            'period_start' => 'date:Y-m-d',
+            'period_end' => 'date:Y-m-d',
         ];
     }
 

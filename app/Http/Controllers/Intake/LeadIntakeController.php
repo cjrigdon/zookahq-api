@@ -125,9 +125,15 @@ class LeadIntakeController extends Controller
         $last = trim((string) ($data['contact_last_name'] ?? ''));
 
         if ($first === '' || $last === '') {
-            throw ValidationException::withMessages([
-                'contact_name' => 'Contact name is required.',
-            ]);
+            $messages = [];
+            if ($first === '') {
+                $messages['contact_first_name'] = 'First name is required.';
+            }
+            if ($last === '') {
+                $messages['contact_last_name'] = 'Last name is required.';
+            }
+
+            throw ValidationException::withMessages($messages);
         }
 
         return [$first, $last];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Events;
 
 use App\Http\Controllers\Concerns\AuthorizesPermissions;
 use App\Http\Controllers\Controller;
+use App\Models\Booking\Contact;
 use App\Models\Events\CalendarActivity;
 use App\Models\Events\Event;
 use App\Models\Events\EventFunction;
@@ -15,6 +16,7 @@ use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
@@ -321,6 +323,7 @@ class EventController extends Controller
         $this->authorizePermission('events.events.manage');
 
         $data = $this->validated($request, creating: true);
+        $data = $this->normalizeAccountContact($data);
 
         $data['created_by'] = auth()->id();
         $data['updated_by'] = auth()->id();
@@ -375,9 +378,11 @@ class EventController extends Controller
         $this->authorizePermission('events.events.manage');
 
         $data = $this->validated($request, creating: false);
+        $data = $this->normalizeAccountContact($data, $event);
 
         $tracked = [
-            'name', 'status', 'event_type_id', 'starts_at', 'ends_at', 'load_in_at', 'load_out_at',
+            'name', 'status', 'event_type_id', 'account_id', 'contact_id',
+            'starts_at', 'ends_at', 'load_in_at', 'load_out_at',
             'venue_space', 'expected_attendance', 'value', 'client_venue_budget',
             'alcohol_served', 'description', 'purpose', 'referral',
             'planner_name', 'planner_title', 'planner_organization', 'planner_email', 'planner_phone',
@@ -461,8 +466,8 @@ class EventController extends Controller
                 'integer',
                 'exists:event_types,id',
             ],
-            'account_id' => ['nullable', 'exists:accounts,id'],
-            'contact_id' => ['nullable', 'exists:contacts,id'],
+            'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
+            'contact_id' => ['nullable', 'integer', 'exists:contacts,id'],
             'value' => ['nullable', 'numeric', 'min:0'],
             'client_venue_budget' => ['nullable', 'numeric', 'min:0'],
             'starts_at' => $startsRule,
@@ -482,6 +487,50 @@ class EventController extends Controller
             'referral' => ['nullable', 'string', 'max:255'],
             'owner_user_id' => ['nullable', 'exists:users,id'],
         ]);
+    }
+
+    /**
+     * Ensure contact_id belongs to account_id; clear contact when account is cleared.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeAccountContact(array $data, ?Event $existing = null): array
+    {
+        $accountId = array_key_exists('account_id', $data)
+            ? $data['account_id']
+            : $existing?->account_id;
+        $contactId = array_key_exists('contact_id', $data)
+            ? $data['contact_id']
+            : $existing?->contact_id;
+
+        if (! $accountId) {
+            if (array_key_exists('account_id', $data) || $contactId) {
+                $data['contact_id'] = null;
+            }
+
+            return $data;
+        }
+
+        if ($contactId) {
+            $belongs = Contact::query()
+                ->where('id', $contactId)
+                ->where('account_id', $accountId)
+                ->exists();
+
+            if (! $belongs) {
+                if (array_key_exists('contact_id', $data)) {
+                    throw ValidationException::withMessages([
+                        'contact_id' => 'Contact must belong to the selected account.',
+                    ]);
+                }
+
+                // Account changed; drop the previous contact rather than failing the save.
+                $data['contact_id'] = null;
+            }
+        }
+
+        return $data;
     }
 
     private function notifyOwner(Event $event, string $title, string $body, string $type): void
