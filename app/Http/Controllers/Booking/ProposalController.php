@@ -14,10 +14,10 @@ class ProposalController extends Controller
     {
         $this->authorizePermission('booking.proposals.view');
 
-        $query = Proposal::with('opportunity')->latest();
+        $query = Proposal::with('event')->latest();
 
-        if ($opportunityId = $request->integer('opportunity_id')) {
-            $query->where('opportunity_id', $opportunityId);
+        if ($eventId = $request->integer('event_id')) {
+            $query->where('event_id', $eventId);
         }
 
         return response()->json(['data' => $query->paginate(25)]);
@@ -28,7 +28,7 @@ class ProposalController extends Controller
         $this->authorizePermission('booking.proposals.manage');
 
         $data = $request->validate([
-            'opportunity_id' => ['required', 'exists:opportunities,id'],
+            'event_id' => ['required', 'exists:events,id'],
             'title' => ['required', 'string', 'max:255'],
             'version' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'string', 'max:50'],
@@ -45,14 +45,14 @@ class ProposalController extends Controller
 
         $proposal = Proposal::create($data);
 
-        return response()->json(['data' => $proposal->load('opportunity')], 201);
+        return response()->json(['data' => $proposal->load('event')], 201);
     }
 
     public function show(Proposal $proposal): JsonResponse
     {
         $this->authorizePermission('booking.proposals.view');
 
-        return response()->json(['data' => $proposal->load(['opportunity', 'contract'])]);
+        return response()->json(['data' => $proposal->load(['event', 'contract'])]);
     }
 
     public function update(Request $request, Proposal $proposal): JsonResponse
@@ -72,7 +72,7 @@ class ProposalController extends Controller
         $data['updated_by'] = auth()->id();
         $proposal->update($data);
 
-        return response()->json(['data' => $proposal->fresh('opportunity')]);
+        return response()->json(['data' => $proposal->fresh('event')]);
     }
 
     public function destroy(Proposal $proposal): JsonResponse
@@ -95,7 +95,7 @@ class ProposalController extends Controller
 
         $contract = Contract::create([
             'proposal_id' => $proposal->id,
-            'opportunity_id' => $proposal->opportunity_id,
+            'event_id' => $proposal->event_id,
             'title' => $data['title'] ?? $proposal->title.' Contract',
             'status' => 'draft',
             'amount' => $data['amount'] ?? $proposal->amount,
@@ -106,7 +106,7 @@ class ProposalController extends Controller
 
         $proposal->update(['status' => 'accepted', 'updated_by' => auth()->id()]);
 
-        return response()->json(['data' => $contract->load(['proposal', 'opportunity'])], 201);
+        return response()->json(['data' => $contract->load(['proposal', 'event'])], 201);
     }
 
     protected function authorizePermission(string $permission): void

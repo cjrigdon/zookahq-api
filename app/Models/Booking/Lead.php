@@ -12,9 +12,24 @@ class Lead extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'phone', 'company', 'source',
-        'status', 'notes', 'owner_user_id', 'created_by', 'updated_by',
+        'account_name', 'account_address', 'account_address_2', 'account_city', 'account_state', 'account_postal_code',
+        'contact_first_name', 'contact_last_name', 'contact_email', 'contact_title', 'contact_phone',
+        'source',
+        'status', 'notes',
+        'event_date', 'load_in_at', 'event_starts_at', 'event_ends_at', 'load_out_at',
+        'owner_user_id', 'created_by', 'updated_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'event_date' => 'date',
+            'load_in_at' => 'datetime',
+            'event_starts_at' => 'datetime',
+            'event_ends_at' => 'datetime',
+            'load_out_at' => 'datetime',
+        ];
+    }
 
     public function owner(): BelongsTo
     {

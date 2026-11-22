@@ -13,8 +13,8 @@ class Account extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'type', 'email', 'phone', 'website', 'billing_address',
-        'city', 'state', 'postal_code', 'country', 'notes',
+        'name', 'type', 'email', 'phone', 'website', 'billing_address', 'address_2',
+        'city', 'state', 'postal_code', 'country',
         'owner_user_id', 'converted_from_lead_id', 'created_by', 'updated_by',
     ];
 
@@ -23,9 +23,14 @@ class Account extends Model
         return $this->hasMany(Contact::class);
     }
 
-    public function opportunities(): HasMany
+    public function events(): HasMany
     {
-        return $this->hasMany(Opportunity::class);
+        return $this->hasMany(\App\Models\Events\Event::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(AccountNote::class);
     }
 
     public function owner(): BelongsTo

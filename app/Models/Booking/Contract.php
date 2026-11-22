@@ -2,6 +2,7 @@
 
 namespace App\Models\Booking;
 
+use App\Models\Events\Event;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ class Contract extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'proposal_id', 'opportunity_id', 'title', 'status', 'amount',
+        'proposal_id', 'event_id', 'title', 'status', 'amount',
         'signed_at', 'signed_by_name', 'document_path', 'notes',
         'created_by', 'updated_by',
     ];
@@ -29,8 +30,8 @@ class Contract extends Model
         return $this->belongsTo(Proposal::class);
     }
 
-    public function opportunity(): BelongsTo
+    public function event(): BelongsTo
     {
-        return $this->belongsTo(Opportunity::class);
+        return $this->belongsTo(Event::class);
     }
 }

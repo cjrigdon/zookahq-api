@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $this->call(NotificationSeeder::class);
+
         if (! Tenant::query()->where('slug', 'demo')->exists()) {
             $tenant = Tenant::create([
                 'id' => 'demo',
@@ -75,15 +77,16 @@ class DatabaseSeeder extends Seeder
                 ]);
                 $acct->assignRole('accounting');
 
-                $seeder->seedBookingSample($user);
-                $seeder->seedEventsAndOpsSample($user);
+                [$account, $contact] = $seeder->seedBookingSample($user);
+                $seeder->seedEventsAndOpsSample($user, $account, $contact);
                 $seeder->seedAccountingSample($user);
                 $seeder->seedReportingSample($user);
+                $seeder->call(NotificationSeeder::class);
             });
         }
     }
 
-    public function seedBookingSample($user): void
+    public function seedBookingSample($user): array
     {
         \App\Models\TenantSetting::create([
             'company_name' => 'Demo Venue',
@@ -93,12 +96,18 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $lead = \App\Models\Booking\Lead::create([
-            'first_name' => 'Jordan',
-            'last_name' => 'Lee',
-            'email' => 'jordan@acmeevents.test',
-            'company' => 'Acme Events',
+            'account_name' => 'Acme Events',
+            'account_address' => '100 Congress Ave',
+            'account_city' => 'Austin',
+            'account_state' => 'TX',
+            'account_postal_code' => '78701',
+            'contact_first_name' => 'Jordan',
+            'contact_last_name' => 'Lee',
+            'contact_email' => 'jordan@acmeevents.test',
+            'contact_title' => 'Event Director',
+            'contact_phone' => '555-0100',
             'source' => 'website',
-            'status' => 'qualified',
+            'status' => 'unqualified',
             'owner_user_id' => $user->id,
             'created_by' => $user->id,
             'updated_by' => $user->id,
@@ -108,8 +117,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Acme Events',
             'email' => 'jordan@acmeevents.test',
             'phone' => '555-0100',
+            'billing_address' => '100 Congress Ave',
             'city' => 'Austin',
             'state' => 'TX',
+            'postal_code' => '78701',
             'owner_user_id' => $user->id,
             'converted_from_lead_id' => $lead->id,
             'created_by' => $user->id,
@@ -127,32 +138,6 @@ class DatabaseSeeder extends Seeder
             'updated_by' => $user->id,
         ]);
 
-        $opportunity = \App\Models\Booking\Opportunity::create([
-            'name' => 'Acme Annual Gala',
-            'account_id' => $account->id,
-            'contact_id' => $contact->id,
-            'stage' => 'proposal',
-            'value' => 45000,
-            'event_start_date' => now()->addMonths(2)->toDateString(),
-            'event_end_date' => now()->addMonths(2)->addDay()->toDateString(),
-            'venue_space' => 'Grand Ballroom',
-            'expected_attendance' => 350,
-            'owner_user_id' => $user->id,
-            'created_by' => $user->id,
-            'updated_by' => $user->id,
-        ]);
-
-        \App\Models\Booking\Proposal::create([
-            'opportunity_id' => $opportunity->id,
-            'title' => 'Acme Gala Proposal',
-            'version' => 1,
-            'status' => 'sent',
-            'amount' => 45000,
-            'valid_until' => now()->addWeeks(2)->toDateString(),
-            'created_by' => $user->id,
-            'updated_by' => $user->id,
-        ]);
-
         \App\Models\Booking\SalesGoal::create([
             'name' => 'Q Sales Target',
             'period_type' => 'quarter',
@@ -163,17 +148,48 @@ class DatabaseSeeder extends Seeder
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ]);
+
+        return [$account, $contact];
     }
 
-    public function seedEventsAndOpsSample($user): void
+    public function seedEventsAndOpsSample($user, $account, $contact): void
     {
         $event = \App\Models\Events\Event::create([
             'name' => 'Acme Annual Gala',
             'status' => 'confirmed',
+            'account_id' => $account->id,
+            'contact_id' => $contact->id,
+            'value' => 45000,
             'starts_at' => now()->addMonths(2)->setTime(17, 0),
             'ends_at' => now()->addMonths(2)->addDay()->setTime(23, 0),
             'venue_space' => 'Grand Ballroom',
             'expected_attendance' => 350,
+            'owner_user_id' => $user->id,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        \App\Models\Booking\Proposal::create([
+            'event_id' => $event->id,
+            'title' => 'Acme Gala Proposal',
+            'version' => 1,
+            'status' => 'sent',
+            'amount' => 45000,
+            'valid_until' => now()->addWeeks(2)->toDateString(),
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        \App\Models\Events\Event::create([
+            'name' => 'Harbor Lights Mixer',
+            'status' => 'opportunity',
+            'account_id' => $account->id,
+            'contact_id' => $contact->id,
+            'value' => 18000,
+            'starts_at' => now()->addMonths(4)->setTime(18, 0),
+            'ends_at' => now()->addMonths(4)->setTime(22, 0),
+            'venue_space' => 'Terrace',
+            'expected_attendance' => 80,
             'owner_user_id' => $user->id,
             'created_by' => $user->id,
             'updated_by' => $user->id,
@@ -370,15 +386,15 @@ class DatabaseSeeder extends Seeder
     public function seedReportingSample($user): void
     {
         \App\Models\Reporting\SavedReport::create([
-            'name' => 'Pipeline by stage',
-            'description' => 'Opportunity value grouped by sales stage',
-            'dataset' => 'opportunities',
-            'columns' => ['name', 'stage', 'value', 'event_start_date', 'venue_space'],
+            'name' => 'Pipeline by status',
+            'description' => 'Event value grouped by status',
+            'dataset' => 'events',
+            'columns' => ['name', 'status', 'value', 'starts_at', 'venue_space'],
             'filters' => [],
             'sort_column' => 'value',
             'sort_direction' => 'desc',
             'chart_type' => 'bar',
-            'group_by' => 'stage',
+            'group_by' => 'status',
             'is_favorite' => true,
             'created_by' => $user->id,
             'updated_by' => $user->id,

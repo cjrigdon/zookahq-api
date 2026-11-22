@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PlatformAuthController extends Controller
@@ -51,5 +52,25 @@ class PlatformAuthController extends Controller
             'user' => $request->user('platform'),
             'type' => 'platform',
         ]);
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user('platform');
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('platform_users', 'email')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        if (! empty($data['password'])) {
+            $user->password = $data['password'];
+        }
+        $user->save();
+
+        return $this->me($request);
     }
 }

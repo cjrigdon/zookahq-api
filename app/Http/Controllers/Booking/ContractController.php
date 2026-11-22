@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking\Contract;
+use App\Services\Notifications\NotificationDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class ContractController extends Controller
     {
         $this->authorizePermission('booking.contracts.view');
 
-        $query = Contract::with(['proposal', 'opportunity'])->latest();
+        $query = Contract::with(['proposal', 'event'])->latest();
 
         if ($status = $request->string('status')->toString()) {
             $query->where('status', $status);
@@ -26,7 +27,7 @@ class ContractController extends Controller
     {
         $this->authorizePermission('booking.contracts.view');
 
-        return response()->json(['data' => $contract->load(['proposal', 'opportunity'])]);
+        return response()->json(['data' => $contract->load(['proposal', 'event'])]);
     }
 
     public function update(Request $request, Contract $contract): JsonResponse
@@ -52,13 +53,25 @@ class ContractController extends Controller
         $contract->update($data);
 
         if (($data['status'] ?? null) === 'signed') {
-            $contract->opportunity?->update([
-                'stage' => 'booked',
+            $contract->event?->update([
+                'status' => 'confirmed',
                 'updated_by' => auth()->id(),
             ]);
+
+            $owner = $contract->fresh('event.owner')?->event?->owner;
+            if ($owner) {
+                app(NotificationDispatcher::class)->send(
+                    $owner,
+                    'Contract signed',
+                    "{$contract->title} was signed.",
+                    actionUrl: "/booking/contracts/{$contract->id}",
+                    type: 'contract.signed',
+                    data: ['contract_id' => $contract->id],
+                );
+            }
         }
 
-        return response()->json(['data' => $contract->fresh(['proposal', 'opportunity'])]);
+        return response()->json(['data' => $contract->fresh(['proposal', 'event'])]);
     }
 
     public function destroy(Contract $contract): JsonResponse

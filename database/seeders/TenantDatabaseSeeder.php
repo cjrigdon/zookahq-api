@@ -17,11 +17,10 @@ class TenantDatabaseSeeder extends Seeder
             'booking.leads.view', 'booking.leads.manage',
             'booking.accounts.view', 'booking.accounts.manage',
             'booking.contacts.view', 'booking.contacts.manage',
-            'booking.opportunities.view', 'booking.opportunities.manage',
             'booking.proposals.view', 'booking.proposals.manage',
             'booking.contracts.view', 'booking.contracts.manage',
             'booking.sales_goals.view', 'booking.sales_goals.manage',
-            'events.calendar.view',
+            'events.calendar.view', 'events.calendar.manage',
             'events.events.view', 'events.events.manage',
             'events.functions.view', 'events.functions.manage',
             'events.service_orders.view', 'events.service_orders.manage',
@@ -38,7 +37,8 @@ class TenantDatabaseSeeder extends Seeder
             'reporting.standard.view',
             'reporting.custom.view', 'reporting.custom.manage',
             'reporting.ai.use',
-            'admin.users.manage', 'admin.settings.manage',
+            'admin.users.manage', 'admin.settings.manage', 'admin.checklists.manage',
+            'admin.spaces.manage', 'admin.event_types.manage',
         ];
 
         foreach ($permissions as $permission) {
@@ -53,11 +53,10 @@ class TenantDatabaseSeeder extends Seeder
             'booking.leads.view', 'booking.leads.manage',
             'booking.accounts.view', 'booking.accounts.manage',
             'booking.contacts.view', 'booking.contacts.manage',
-            'booking.opportunities.view', 'booking.opportunities.manage',
             'booking.proposals.view', 'booking.proposals.manage',
             'booking.contracts.view', 'booking.contracts.manage',
             'booking.sales_goals.view', 'booking.sales_goals.manage',
-            'events.calendar.view',
+            'events.calendar.view', 'events.calendar.manage',
             'events.events.view', 'events.events.manage',
             'events.functions.view', 'events.functions.manage',
             'events.service_orders.view', 'events.service_orders.manage',
@@ -69,7 +68,8 @@ class TenantDatabaseSeeder extends Seeder
 
         $operations = Role::findOrCreate('operations');
         $operations->syncPermissions([
-            'events.calendar.view', 'events.events.view', 'events.functions.view',
+            'events.calendar.view', 'events.calendar.manage',
+            'events.events.view', 'events.functions.view',
             'events.service_orders.view', 'events.service_orders.manage', 'events.changes.view',
             'operations.work_orders.view', 'operations.work_orders.manage',
         ]);
@@ -90,7 +90,7 @@ class TenantDatabaseSeeder extends Seeder
         $readOnly = Role::findOrCreate('read_only');
         $readOnly->syncPermissions([
             'booking.leads.view', 'booking.accounts.view', 'booking.contacts.view',
-            'booking.opportunities.view', 'booking.proposals.view', 'booking.contracts.view',
+            'booking.proposals.view', 'booking.contracts.view',
             'booking.sales_goals.view',
             'events.calendar.view', 'events.events.view', 'events.functions.view',
             'events.service_orders.view', 'events.changes.view',

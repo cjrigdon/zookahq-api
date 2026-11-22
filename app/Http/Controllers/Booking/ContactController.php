@@ -20,10 +20,21 @@ class ContactController extends Controller
         }
 
         if ($search = $request->string('search')->toString()) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($search, $like) {
+                $q->where('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", [$like])
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('phone', 'like', $like)
+                    ->orWhere('title', 'like', $like);
+                $digits = preg_replace('/\D+/', '', $search) ?? '';
+                if (strlen($digits) >= 3) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), '-', ''), ' ', ''), '(', ''), ')', ''), '+', '') like ?",
+                        ["%{$digits}%"],
+                    );
+                }
             });
         }
 

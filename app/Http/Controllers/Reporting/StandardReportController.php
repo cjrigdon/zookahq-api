@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounting\ApBill;
 use App\Models\Accounting\ArInvoice;
 use App\Models\Booking\Lead;
-use App\Models\Booking\Opportunity;
 use App\Models\Events\Event;
 use App\Models\Operations\WorkOrder;
 use App\Services\Reporting\ReportCatalog;
@@ -29,13 +28,17 @@ class StandardReportController extends Controller
             'accounting' => null,
         ];
 
-        if (Schema::hasTable('leads') && Schema::hasTable('opportunities')) {
+        if (Schema::hasTable('leads') && Schema::hasTable('events')) {
+            $pipeline = Event::query()->where('status', 'opportunity');
             $data['booking'] = [
                 'leads_total' => Lead::count(),
                 'leads_by_status' => Lead::query()->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status'),
-                'opportunities_total' => Opportunity::count(),
-                'pipeline_value' => (float) Opportunity::whereNotIn('stage', ['lost', 'cancelled'])->sum('value'),
-                'opportunities_by_stage' => Opportunity::query()->selectRaw('stage, count(*) as count, coalesce(sum(value),0) as value')->groupBy('stage')->get(),
+                'opportunities_total' => (clone $pipeline)->count(),
+                'pipeline_value' => (float) (clone $pipeline)->sum('value'),
+                'opportunities_by_stage' => Event::query()
+                    ->selectRaw('status as stage, count(*) as count, coalesce(sum(value),0) as value')
+                    ->groupBy('status')
+                    ->get(),
             ];
         }
 

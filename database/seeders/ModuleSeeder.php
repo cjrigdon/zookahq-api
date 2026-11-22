@@ -10,7 +10,7 @@ class ModuleSeeder extends Seeder
     public function run(): void
     {
         $modules = [
-            ['code' => 'booking', 'name' => 'Booking', 'description' => 'Leads, accounts, opportunities, proposals, contracts, sales goals', 'sort_order' => 1],
+            ['code' => 'booking', 'name' => 'Booking', 'description' => 'Leads, accounts, proposals, contracts, sales goals', 'sort_order' => 1],
             ['code' => 'events', 'name' => 'Event Management', 'description' => 'Calendar, functions, service orders, change tracking', 'sort_order' => 2],
             ['code' => 'operations', 'name' => 'Operations', 'description' => 'Work order management', 'sort_order' => 3],
             ['code' => 'accounting', 'name' => 'Accounting', 'description' => 'Inventory, AR/AP, GL, payments', 'sort_order' => 4],

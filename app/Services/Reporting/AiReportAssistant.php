@@ -69,17 +69,17 @@ class AiReportAssistant
     protected function suggestStub(string $prompt): array
     {
         $lower = Str::lower($prompt);
-        $dataset = 'opportunities';
+        $dataset = 'events';
         $chart = 'bar';
-        $groupBy = 'stage';
-        $columns = ['name', 'stage', 'value', 'event_start_date'];
+        $groupBy = 'status';
+        $columns = ['name', 'status', 'value', 'starts_at'];
         $filters = [];
         $name = 'AI suggested pipeline report';
 
         if (Str::contains($lower, ['lead', 'prospect'])) {
             $dataset = 'leads';
             $groupBy = 'status';
-            $columns = ['first_name', 'last_name', 'company', 'status', 'source'];
+            $columns = ['account_name', 'contact_first_name', 'contact_last_name', 'contact_email', 'status', 'source'];
             $name = 'AI suggested leads report';
         } elseif (Str::contains($lower, ['invoice', 'receivable', 'ar '])) {
             $dataset = 'ar_invoices';
@@ -98,10 +98,15 @@ class AiReportAssistant
             $groupBy = 'status';
             $columns = ['title', 'status', 'priority', 'category', 'due_at'];
             $name = 'AI suggested work orders report';
+        } elseif (Str::contains($lower, ['pipeline', 'opportunit'])) {
+            $dataset = 'opportunities';
+            $groupBy = 'venue_space';
+            $columns = ['name', 'status', 'value', 'starts_at', 'venue_space'];
+            $name = 'AI suggested pipeline report';
         } elseif (Str::contains($lower, ['event', 'calendar', 'function'])) {
             $dataset = 'events';
             $groupBy = 'status';
-            $columns = ['name', 'status', 'venue_space', 'starts_at', 'expected_attendance'];
+            $columns = ['name', 'status', 'value', 'venue_space', 'starts_at', 'expected_attendance'];
             $name = 'AI suggested events report';
         }
 
@@ -111,8 +116,8 @@ class AiReportAssistant
         if (Str::contains($lower, ['qualified'])) {
             $filters[] = ['field' => 'status', 'op' => 'eq', 'value' => 'qualified'];
         }
-        if (Str::contains($lower, ['booked', 'won'])) {
-            $filters[] = ['field' => 'stage', 'op' => 'eq', 'value' => 'booked'];
+        if (Str::contains($lower, ['booked', 'won', 'confirmed'])) {
+            $filters[] = ['field' => 'status', 'op' => 'eq', 'value' => 'confirmed'];
         }
 
         return $this->normalizeSuggestion([
@@ -130,7 +135,7 @@ class AiReportAssistant
 
     protected function normalizeSuggestion(array $parsed, string $prompt, string $provider): array
     {
-        $datasetKey = $parsed['dataset'] ?? 'opportunities';
+        $datasetKey = $parsed['dataset'] ?? 'events';
         $def = $this->catalog->find($datasetKey) ?? $this->catalog->datasets()[0] ?? null;
         if (! $def) {
             abort(422, 'No reportable datasets available.');

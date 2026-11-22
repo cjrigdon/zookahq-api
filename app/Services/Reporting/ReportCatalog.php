@@ -5,7 +5,6 @@ namespace App\Services\Reporting;
 use App\Models\Accounting\ApBill;
 use App\Models\Accounting\ArInvoice;
 use App\Models\Booking\Lead;
-use App\Models\Booking\Opportunity;
 use App\Models\Events\Event;
 use App\Models\Operations\WorkOrder;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,28 +18,36 @@ class ReportCatalog
         return array_values(array_filter([
             $this->definition('leads', 'Leads', 'booking', Lead::class, [
                 ['key' => 'id', 'label' => 'ID', 'type' => 'number'],
-                ['key' => 'first_name', 'label' => 'First name', 'type' => 'string'],
-                ['key' => 'last_name', 'label' => 'Last name', 'type' => 'string'],
-                ['key' => 'email', 'label' => 'Email', 'type' => 'string'],
-                ['key' => 'company', 'label' => 'Company', 'type' => 'string'],
+                ['key' => 'account_name', 'label' => 'Account name', 'type' => 'string'],
+                ['key' => 'account_address', 'label' => 'Address', 'type' => 'string'],
+                ['key' => 'account_address_2', 'label' => 'Address 2', 'type' => 'string'],
+                ['key' => 'account_city', 'label' => 'City', 'type' => 'string'],
+                ['key' => 'account_state', 'label' => 'State', 'type' => 'string'],
+                ['key' => 'account_postal_code', 'label' => 'Zip', 'type' => 'string'],
+                ['key' => 'contact_first_name', 'label' => 'Contact first name', 'type' => 'string'],
+                ['key' => 'contact_last_name', 'label' => 'Contact last name', 'type' => 'string'],
+                ['key' => 'contact_email', 'label' => 'Contact email', 'type' => 'string'],
+                ['key' => 'contact_title', 'label' => 'Contact title', 'type' => 'string'],
+                ['key' => 'contact_phone', 'label' => 'Contact phone', 'type' => 'string'],
                 ['key' => 'source', 'label' => 'Source', 'type' => 'string'],
                 ['key' => 'status', 'label' => 'Status', 'type' => 'string'],
                 ['key' => 'created_at', 'label' => 'Created', 'type' => 'datetime'],
             ], 'status'),
-            $this->definition('opportunities', 'Opportunities', 'booking', Opportunity::class, [
+            $this->definition('opportunities', 'Opportunities', 'booking', Event::class, [
                 ['key' => 'id', 'label' => 'ID', 'type' => 'number'],
                 ['key' => 'name', 'label' => 'Name', 'type' => 'string'],
-                ['key' => 'stage', 'label' => 'Stage', 'type' => 'string'],
+                ['key' => 'status', 'label' => 'Status', 'type' => 'string'],
                 ['key' => 'value', 'label' => 'Value', 'type' => 'money'],
                 ['key' => 'venue_space', 'label' => 'Venue space', 'type' => 'string'],
                 ['key' => 'expected_attendance', 'label' => 'Attendance', 'type' => 'number'],
-                ['key' => 'event_start_date', 'label' => 'Event start', 'type' => 'date'],
+                ['key' => 'starts_at', 'label' => 'Starts', 'type' => 'datetime'],
                 ['key' => 'created_at', 'label' => 'Created', 'type' => 'datetime'],
-            ], 'stage'),
+            ], 'venue_space', fn ($query) => $query->where('status', 'opportunity')),
             $this->definition('events', 'Events', 'events', Event::class, [
                 ['key' => 'id', 'label' => 'ID', 'type' => 'number'],
                 ['key' => 'name', 'label' => 'Name', 'type' => 'string'],
                 ['key' => 'status', 'label' => 'Status', 'type' => 'string'],
+                ['key' => 'value', 'label' => 'Value', 'type' => 'money'],
                 ['key' => 'venue_space', 'label' => 'Venue space', 'type' => 'string'],
                 ['key' => 'expected_attendance', 'label' => 'Attendance', 'type' => 'number'],
                 ['key' => 'starts_at', 'label' => 'Starts', 'type' => 'datetime'],
@@ -105,6 +112,9 @@ class ReportCatalog
 
         /** @var Builder $query */
         $query = ($def['model'])::query();
+        if (isset($def['constrain']) && is_callable($def['constrain'])) {
+            $def['constrain']($query);
+        }
 
         foreach ($filters ?? [] as $filter) {
             $field = $filter['field'] ?? null;
@@ -160,7 +170,7 @@ class ReportCatalog
         ];
     }
 
-    protected function definition(string $key, string $name, string $module, string $model, array $columns, ?string $defaultGroup): ?array
+    protected function definition(string $key, string $name, string $module, string $model, array $columns, ?string $defaultGroup, ?callable $constrain = null): ?array
     {
         $table = (new $model)->getTable();
         if (! Schema::hasTable($table)) {
@@ -174,6 +184,7 @@ class ReportCatalog
             'model' => $model,
             'columns' => $columns,
             'default_group_by' => $defaultGroup,
+            'constrain' => $constrain,
         ];
     }
 }
