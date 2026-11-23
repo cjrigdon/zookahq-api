@@ -20,6 +20,7 @@ class TenantDatabaseSeeder extends Seeder
             'booking.proposals.view', 'booking.proposals.manage',
             'booking.contracts.view', 'booking.contracts.manage',
             'booking.sales_goals.view', 'booking.sales_goals.manage',
+            'booking.documents.view', 'booking.documents.manage',
             'events.calendar.view', 'events.calendar.manage',
             'events.events.view', 'events.events.manage',
             'events.functions.view', 'events.functions.manage',
@@ -38,6 +39,7 @@ class TenantDatabaseSeeder extends Seeder
             'reporting.custom.view', 'reporting.custom.manage',
             'reporting.ai.use',
             'admin.users.manage', 'admin.settings.manage', 'admin.checklists.manage',
+            'admin.documents.manage',
             'admin.spaces.manage', 'admin.event_types.manage',
         ];
 
@@ -56,6 +58,7 @@ class TenantDatabaseSeeder extends Seeder
             'booking.proposals.view', 'booking.proposals.manage',
             'booking.contracts.view', 'booking.contracts.manage',
             'booking.sales_goals.view', 'booking.sales_goals.manage',
+            'booking.documents.view', 'booking.documents.manage',
             'events.calendar.view', 'events.calendar.manage',
             'events.events.view', 'events.events.manage',
             'events.functions.view', 'events.functions.manage',
@@ -92,6 +95,7 @@ class TenantDatabaseSeeder extends Seeder
             'booking.leads.view', 'booking.accounts.view', 'booking.contacts.view',
             'booking.proposals.view', 'booking.contracts.view',
             'booking.sales_goals.view',
+            'booking.documents.view',
             'events.calendar.view', 'events.events.view', 'events.functions.view',
             'events.service_orders.view', 'events.changes.view',
             'operations.work_orders.view',

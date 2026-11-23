@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ChecklistController;
+use App\Http\Controllers\Admin\DocumentTemplateController;
 use App\Http\Controllers\Admin\EventTypeController as AdminEventTypeController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SpaceAttributeController;
@@ -39,6 +40,7 @@ use App\Http\Controllers\Reporting\AiReportController;
 use App\Http\Controllers\Reporting\SavedReportController;
 use App\Http\Controllers\Reporting\StandardReportController;
 use App\Http\Controllers\Notifications\NotificationController;
+use App\Http\Controllers\Documents\DocumentController;
 use App\Http\Controllers\Operations\ChecklistInstanceController;
 use App\Http\Controllers\Operations\WorkOrderController;
 use App\Http\Controllers\Intake\AddressSuggestionController;
@@ -101,6 +103,14 @@ Route::prefix('v1')->group(function () {
                 Route::put('checklists/{checklist}', [ChecklistController::class, 'update']);
                 Route::delete('checklists/{checklist}', [ChecklistController::class, 'destroy']);
 
+                Route::get('documents/merge-fields', [DocumentTemplateController::class, 'mergeFields']);
+                Route::get('documents/templates', [DocumentTemplateController::class, 'index']);
+                Route::post('documents/templates', [DocumentTemplateController::class, 'store']);
+                Route::get('documents/templates/{documentTemplate}', [DocumentTemplateController::class, 'show']);
+                Route::post('documents/templates/{documentTemplate}', [DocumentTemplateController::class, 'update']);
+                Route::delete('documents/templates/{documentTemplate}', [DocumentTemplateController::class, 'destroy']);
+                Route::get('documents/templates/{documentTemplate}/download', [DocumentTemplateController::class, 'download']);
+
                 Route::get('space-attributes', [SpaceAttributeController::class, 'index']);
                 Route::post('space-attributes', [SpaceAttributeController::class, 'store']);
                 Route::put('space-attributes/{spaceAttribute}', [SpaceAttributeController::class, 'update']);
@@ -114,6 +124,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('event-types', [AdminEventTypeController::class, 'store']);
                 Route::put('event-types/{eventType}', [AdminEventTypeController::class, 'update']);
                 Route::delete('event-types/{eventType}', [AdminEventTypeController::class, 'destroy']);
+            });
+
+            Route::prefix('documents')->group(function () {
+                Route::get('available', [DocumentController::class, 'available']);
+                Route::get('/', [DocumentController::class, 'index']);
+                Route::post('generate', [DocumentController::class, 'generate']);
+                Route::get('{document}/download', [DocumentController::class, 'download']);
+                Route::post('{document}/email', [DocumentController::class, 'email']);
+                Route::delete('{document}', [DocumentController::class, 'destroy']);
             });
 
             Route::prefix('checklists')->group(function () {
@@ -146,6 +165,8 @@ Route::prefix('v1')->group(function () {
                 Route::post('proposals/{proposal}/contracts', [ProposalController::class, 'createContract']);
 
                 Route::apiResource('contracts', ContractController::class)->except(['store']);
+                Route::post('contracts/{contract}/generate', [ContractController::class, 'generate']);
+                Route::post('contracts/{contract}/email', [ContractController::class, 'email']);
                 Route::apiResource('sales-goals', SalesGoalController::class);
             });
 

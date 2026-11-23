@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Documents\Document;
 use App\Models\Notifications\SystemNotification;
 use App\Services\Checklistables;
 use App\Services\ChecklistStarter;
@@ -22,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
 
-        Relation::morphMap(Checklistables::MAP);
+        Relation::morphMap(array_merge(Checklistables::MAP, Document::DOCUMENTABLE_MAP));
         $this->registerRequiredChecklistHooks();
 
         Route::bind('notification', function (string $value) {

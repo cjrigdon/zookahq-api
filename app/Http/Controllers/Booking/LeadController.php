@@ -62,16 +62,11 @@ class LeadController extends Controller
         return response()->json(['data' => $lead->load('owner')], 201);
     }
 
-    public function show(Lead $lead, LeadAccountMatcher $matcher): JsonResponse
+    public function show(Lead $lead): JsonResponse
     {
         $this->authorizePermission('booking.leads.view');
 
-        $payload = $lead->load('owner')->toArray();
-        if ($lead->status !== 'converted') {
-            $payload['match_suggestions'] = $matcher->matches($lead)->values();
-        }
-
-        return response()->json(['data' => $payload]);
+        return response()->json(['data' => $lead->load('owner')]);
     }
 
     public function update(Request $request, Lead $lead): JsonResponse
@@ -139,13 +134,14 @@ class LeadController extends Controller
                 'lead' => $lead->fresh(),
                 'account' => $account->fresh(['contacts']),
                 'contact' => $contact,
+                'matched' => true,
             ];
         });
 
         return response()->json(['data' => $result]);
     }
 
-    public function convert(Request $request, Lead $lead): JsonResponse
+    public function convert(Request $request, Lead $lead, LeadAccountMatcher $matcher): JsonResponse
     {
         $this->authorizePermission('booking.leads.manage');
 
@@ -155,7 +151,26 @@ class LeadController extends Controller
 
         $data = $request->validate([
             'account_name' => ['nullable', 'string', 'max:255'],
+            'account_id' => ['nullable', 'integer', 'exists:accounts,id'],
+            'force_new' => ['nullable', 'boolean'],
         ]);
+
+        // Prefer an explicit account, otherwise auto-match on convert.
+        if (! ($data['force_new'] ?? false)) {
+            $accountId = $data['account_id'] ?? null;
+            if (! $accountId) {
+                $best = $matcher->matches($lead, 1)->first();
+                if ($best && ($best['score'] ?? 0) >= LeadAccountMatcher::AUTO_ATTACH_SCORE) {
+                    $accountId = $best['account']->id;
+                }
+            }
+
+            if ($accountId) {
+                $request->merge(['account_id' => $accountId]);
+
+                return $this->attach($request, $lead);
+            }
+        }
 
         $result = DB::transaction(function () use ($lead, $data) {
             $contactName = trim($lead->contact_first_name.' '.$lead->contact_last_name);
@@ -197,6 +212,7 @@ class LeadController extends Controller
                 'lead' => $lead->fresh(),
                 'account' => $account,
                 'contact' => $contact,
+                'matched' => false,
             ];
         });
 

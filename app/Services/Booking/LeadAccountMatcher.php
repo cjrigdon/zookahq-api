@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 
 class LeadAccountMatcher
 {
+    /** Minimum score to auto-attach a lead to an existing account on convert. */
+    public const AUTO_ATTACH_SCORE = 85;
+
     /**
      * @return Collection<int, array{account: Account, score: int, reasons: list<string>}>
      */
